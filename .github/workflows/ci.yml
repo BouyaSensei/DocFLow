@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compose-lint:
+    name: Lint & validation du compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint YAML (yamllint)
+        run: |
+          pip install yamllint
+          yamllint docker-compose.yml
+
+      - name: Validation docker compose config
+        env:
+          MONGO_USER: ci
+          MONGO_PASSWORD: ci
+          RABBITMQ_USER: ci
+          RABBITMQ_PASSWORD: ci
+        run: docker compose config --quiet
+
+  stack-smoke-test:
+    name: Smoke test du stack (up + healthchecks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Démarrer le stack
+        env:
+          MONGO_USER: ci
+          MONGO_PASSWORD: ci
+          RABBITMQ_USER: ci
+          RABBITMQ_PASSWORD: ci
+        run: docker compose up -d
+
+      - name: Attendre que les services soient healthy (max 180s)
+        run: |
+          deadline=$((SECONDS + 180))
+          while true; do
+            mongo=$(docker inspect --format '{{.State.Health.Status}}' recapjs-mongo 2>/dev/null || echo "starting")
+            rabbit=$(docker inspect --format '{{.State.Health.Status}}' recapjs-rabbitmq 2>/dev/null || echo "starting")
+            echo "mongo=$mongo rabbitmq=$rabbit"
+            if [ "$mongo" = "healthy" ] && [ "$rabbit" = "healthy" ]; then
+              echo "Les deux services sont healthy."
+              break
+            fi
+            if [ $SECONDS -ge $deadline ]; then
+              docker compose logs
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Vérifier la connectivité réelle
+        run: |
+          docker exec recapjs-mongo mongosh -u ci -p ci --quiet --eval "db.adminCommand('ping')"
+          docker exec recapjs-rabbitmq rabbitmq-diagnostics -q ping
+
+      - name: Logs (sur échec)
+        if: failure()
+        run: docker compose logs

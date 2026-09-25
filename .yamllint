@@ -1,0 +1,8 @@
+---
+# Config yamllint adaptée à docker-compose + GitHub Actions
+extends: default
+rules:
+  line-length: disable          # commentaires inline longs sur les ports
+  document-start: disable       # pas de "---" requis en compose / workflow
+  truthy:
+    allowed-values: ['true', 'false', 'on']   # clé "on:" standard des workflows GH

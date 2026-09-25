@@ -1,0 +1,11 @@
+# Secrets — jamais à committer
+.env
+
+# Node (pour la suite)
+node_modules/
+dist/
+coverage/
+
+# Divers
+*.log
+.DS_Store

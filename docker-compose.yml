@@ -1,0 +1,43 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: recapjs-mongo
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:27017:27017"   # accessible depuis machines externes
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Definir MONGO_PASSWORD dans .env}
+    volumes:
+      - mongo_data:/data/db        # données persistantes
+      - mongo_logs:/var/log/mongodb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: recapjs-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:5672:5672"        # AMQP (clients)
+      - "0.0.0.0:15672:15672"      # UI de gestion (http://IP:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Definir RABBITMQ_PASSWORD dans .env}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq   # données + mnesia persistantes
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mongo_data:
+  mongo_logs:
+  rabbitmq_data:
