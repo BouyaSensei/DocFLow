@@ -1,0 +1,24 @@
+{
+  "name": "recapjs",
+  "version": "1.0.0",
+  "description": "plateforme de dématérialisation, de classification (ML) et de consolidation de documents financiers",
+  "homepage": "https://github.com/BouyaSensei/DocFLow#readme",
+  "bugs": {
+    "url": "https://github.com/BouyaSensei/DocFLow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BouyaSensei/DocFLow.git"
+  },
+  "license": "ISC",
+  "author": "BouyaSensei",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "dependencies": {
+    "pg": "^8.23.0",
+    "puppeteer": "^25.12.0"
+  }
+}
